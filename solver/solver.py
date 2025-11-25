@@ -14,10 +14,10 @@ class NonogramSolver:
         self.row: int = row
         self.col: int = col
         self.rows_possible: list[list[list[int]]] = []
-        self.cols_current: list[list[int]] = []
+        self.cols_current: list[list[int]] = [[0] for _ in range(col)]
         self.solved: bool = False
         self.ready_to_solve: bool = False
-        self.rows_possible_index: list[int] = [0 for _ in range(row + 2)]
+        self.rows_possible_index: list[int] = [0 for _ in range(row)]
 
     def row_clues(self, row_clues: list[list[int]]) -> None:
         self.row_clues = row_clues
@@ -111,9 +111,28 @@ class NonogramSolver:
         for clue in self.row_clues:
             self.rows_possible.append(self._generate_possibilities_for_clue(clue, self.col))
         pass
+    
+    @staticmethod
+    def _check_one_column(column_current: list[int], clue: list[int]) -> bool:
+        ans: bool = True
 
+        new_cc = list(filter(lambda x: x != 0, column_current))
+        len_new_cc: int = len(new_cc)
+        len_clue: int = len(clue)
+        for i, c in enumerate(new_cc):
+            if i >= len_clue or c > clue[i]:
+                return False
+            elif i == len_new_cc - 1 and c < clue[i]:
+                return False
+            elif c != clue[i]:
+                ans = False
+            
+        return True
+    
     def _check_columns_match_clues(self) -> bool:
-        # Placeholder for checking columns against clues logic
+        for i, col in enumerate(self.cols_current):
+            if not self._check_one_column(col, self.col_clues[i]):
+                return False
         return True
 
     def _columns_step_ahead(self, row: list[int]) -> None:
