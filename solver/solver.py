@@ -1,3 +1,6 @@
+from itertools import chain
+from utils.math_utils import integer_partitions
+
 class NonogramSolver:
     def __init__(
         self,
@@ -82,8 +85,31 @@ class NonogramSolver:
         self.ready_to_solve = True
         return True
 
+    @staticmethod
+    def _generate_one_possibility(clue: list[int], partition: list[int]) -> list[int]:
+        parts = list(
+            chain.from_iterable(
+                chain([0] * partition[i], [1] * c) for i, c in enumerate(clue)
+            )
+        )
+        parts.extend([0] * partition[-1])
+        return parts[1:-1]
+
+    def _generate_possibilities_for_clue(self,
+        clue: list[int], length: int
+    ) -> list[list[int]]:
+        partitions = integer_partitions(
+            length - sum(clue) + 2, len(clue) + 1
+        )
+        possibilities = [
+            self._generate_one_possibility(clue, partition)
+            for partition in partitions
+        ]
+        return possibilities
+
     def _generate_possibilities(self) -> None:
-        # Placeholder for generating possibilities logic
+        for clue in self.row_clues:
+            self.rows_possible.append(self._generate_possibilities_for_clue(clue, self.col))
         pass
 
     def _check_columns_match_clues(self) -> bool:
