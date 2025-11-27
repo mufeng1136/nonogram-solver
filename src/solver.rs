@@ -98,6 +98,30 @@ impl NonogramSolver {
     }
 }
 
+mod utils {
+    pub fn integer_partitions(n: usize, k: usize) -> Vec<Vec<usize>> {
+        let mut result: Vec<Vec<usize>> = Vec::new();
+        let mut current: Vec<usize> = Vec::new();
+        fn helper(n: usize, k: usize, current: &mut Vec<usize>, result: &mut Vec<Vec<usize>>) {
+            if k == 1 {
+                let mut composition: Vec<usize> = current.clone(); // 复制当前前缀
+                composition.push(n); // 相当于 current + [n]
+                result.push(composition); // 收集到结果中
+                return;
+            }
+            if k > n {
+                return;
+            }
+            for i in 1..=(n - k + 1) {
+                current.push(i);
+                helper(n - i, k - 1, current, result);
+                current.pop();
+            }
+        }
+        helper(n, k, &mut current, &mut result);
+        return result;
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -105,8 +129,17 @@ mod tests {
 
     #[test]
     fn test_output() {
-        let mut TestSolver = NonogramSolver::new(10, 10);
-        TestSolver.show_state();
-        TestSolver.show_answer();
+        let test_solver = NonogramSolver::new(10, 10);
+        test_solver.show_state();
+        test_solver.show_answer();
+    }
+
+    #[test]
+    fn test_integer_partitions() {
+        let partitions = utils::integer_partitions(5, 2);
+        assert_eq!(
+            partitions,
+            vec![vec![1, 4], vec![2, 3], vec![3, 2], vec![4, 1]]
+        );
     }
 }
