@@ -28,8 +28,8 @@ impl NonogramSolver {
             valid: false,
             cols_current: Vec::new(),
             rows_possibilities_index: Vec::new(),
-            certain_grids_from_input: Vec::new(),
-            certain_grids: Vec::new(),
+            certain_grids_from_input: vec![vec![2; col]; row],
+            certain_grids: vec![vec![2; col]; row],
         }
     }
 
