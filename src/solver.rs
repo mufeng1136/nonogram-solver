@@ -5,6 +5,7 @@ pub struct NonogramSolver {
     col_clues: Option<Vec<Vec<usize>>>,
     rows_possibilities: Vec<Vec<Vec<usize>>>,
     cols_possibilities: Vec<Vec<Vec<usize>>>,
+    certain_grids_from_input: Vec<Vec<usize>>,
     certain_grids: Vec<Vec<usize>>,
     unsolvable: bool,
     solved: bool,
@@ -22,12 +23,13 @@ impl NonogramSolver {
             col_clues: None,
             rows_possibilities: Vec::new(),
             cols_possibilities: Vec::new(),
-            certain_grids: Vec::new(),
             unsolvable: false,
             solved: false,
             valid: false,
             cols_current: Vec::new(),
             rows_possibilities_index: Vec::new(),
+            certain_grids_from_input: Vec::new(),
+            certain_grids: Vec::new(),
         }
     }
 
