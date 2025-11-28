@@ -370,3 +370,203 @@ class NonogramSolver:
                 left += row_clue_texts[idx - 1].rjust(row_clue_width) + " "
 
             print(left + "".join(parts))
+
+class NonogramSolverV2(NonogramSolver):
+    """No dfs ,More Intelligent"""
+    def __init__(
+            self,
+            row: int,
+            col: int,
+            row_clues: list[list[int]] | None = None,
+            col_clues: list[list[int]] | None = None,
+    ):
+        super().__init__( row, col, row_clues, col_clues)
+
+        # Solution grid where: 1 = filled cell, 0 = empty cell, -1 = uncertain
+        # The first layer is rows, and the second layer is cells within rows
+        self.solve_result: list[list[int]] = [[-1] * col for _ in range(row)]
+
+        self.cols_possible: list[list[list[int]]] = []
+
+        del self.cols_current
+
+    def solve(self) -> None:
+        """Solve the nonogram puzzle."""
+        self.check_ready()
+        if not self.ready_to_solve:
+            raise RuntimeError("Solver is not ready. Please check clues and grid size.")
+
+        # Generate all possible row configurations
+        self._generate_possibilities()
+
+        # Start overlapping states solve
+        self.solved = self._overlapping_states_solve()
+
+        if not self.solved:
+            raise RuntimeError("No solution found for the given clues.")
+
+    def _generate_possibilities(self) -> None:
+        for clue in self.row_clues:
+            self.rows_possible.append(self._generate_possibilities_for_clue(clue, self.col))
+        for clue in self.col_clues:
+            self.cols_possible.append(self._generate_possibilities_for_clue(clue, self.row))
+        pass
+
+    @staticmethod
+    def _reasoning_solve_result(current_state: list[int], possible: list[list[int]]) -> None:
+        """
+        Perform logical deduction for a single row/column and update state in-place.
+
+        This method filters the possible patterns based on the current state and then
+        deduces which cells must be filled (1) or empty (0) in all valid patterns.
+        The results are directly applied to the input parameters.
+
+        Args:
+            current_state: Current state of the row/column where:
+                          -1 = uncertain, 0 = empty, 1 = filled (modified in-place)
+            possible: List of all possible patterns for this row/column (modified in-place)
+
+        Raises:
+            ValueError: If no valid patterns match the current state (contradiction detected)
+        """
+        length = len(current_state)
+        if length == 0:
+            return  # No cells to process
+
+        # Filter possible patterns to only those consistent with current state
+        filtered_possible = []
+        for pattern in possible:
+            valid = True
+            for i in range(length):
+                # Skip uncertain positions, but check determined positions
+                if current_state[i] != -1 and current_state[i] != pattern[i]:
+                    valid = False
+                    break
+            if valid:
+                filtered_possible.append(pattern)
+
+        # Update the possible list in place to reflect the filtered results
+        possible.clear()
+        possible.extend(filtered_possible)
+
+        # If no valid patterns remain, raise an exception
+        if not possible:
+            raise ValueError("Contradiction detected: no valid patterns match the current state")
+
+        # For each position, check if all valid patterns agree on the value
+        for i in range(length):
+            all_ones = True
+            all_zeros = True
+
+            for pattern in possible:
+                if pattern[i] == 0:
+                    all_ones = False
+                else:  # pattern[i] == 1
+                    all_zeros = False
+
+                # Early exit if both become False
+                if not all_ones and not all_zeros:
+                    break
+
+            # Update current_state in-place based on consensus
+            if all_ones:
+                current_state[i] = 1
+            elif all_zeros:
+                current_state[i] = 0
+            # Otherwise remains unchanged (could be -1 or previously determined value)
+
+    def _overlapping_states_solve(self) -> bool:
+        """
+        Solve the Nonogram puzzle using iterative row and column reasoning.
+
+        This method alternates between reasoning on rows and columns. In each iteration,
+        it first processes all rows using the `_reasoning_solve_result` method to update
+        the solve_result based on row clues and possible patterns. Then it processes all
+        columns similarly. The process repeats until no more changes are made in an
+        entire iteration or the puzzle is solved.
+
+        Returns:
+            bool: True if the puzzle is successfully solved (no uncertain cells remain),
+                  False if no further progress can be made but uncertain cells still exist.
+
+        Raises:
+            ValueError: If a contradiction is found during reasoning (e.g., no valid
+                       patterns match the current state for a row or column).
+        """
+        changed = True
+        iterations = 0
+        max_iterations = self.row * self.col * 2  # Prevent infinite loops
+
+        # Continue until no changes occur or puzzle is solved
+        while changed and iterations < max_iterations:
+            changed = False
+            iterations += 1
+
+            # Phase 1: Process all rows
+            for i in range(self.row):
+                # Get current row state and possible patterns
+                current_row_state = self.solve_result[i]
+                row_possibilities = self.rows_possible[i]
+
+                # Skip if row is already determined
+                if -1 not in current_row_state:
+                    continue
+
+                # Save original state for comparison
+                original_state = current_row_state.copy()
+
+                try:
+                    # Apply reasoning to this row
+                    self._reasoning_solve_result(
+                         current_row_state, row_possibilities
+                    )
+                except ValueError as e:
+                    # Contradiction found in row reasoning
+                    raise ValueError(f"Contradiction in row {i}: {e}")
+
+                # Check if row state was updated
+                if current_row_state != original_state:
+                    changed = True
+                    # Update the solve_result in place (current_row_state is a reference)
+                    # No need to explicitly assign as it's modified in place
+
+            # Phase 2: Process all columns
+            for j in range(self.col):
+                # Build current column state
+                current_col_state = [self.solve_result[i][j] for i in range(self.row)]
+                col_possibilities = self.cols_possible[j]
+
+                # Skip if column is already determined
+                if -1 not in current_col_state:
+                    continue
+
+                # Save original state for comparison
+                original_state = current_col_state.copy()
+
+                try:
+                    # Apply reasoning to this column
+                    self._reasoning_solve_result(
+                         current_col_state, col_possibilities
+                    )
+                except ValueError as e:
+                    # Contradiction found in column reasoning
+                    raise ValueError(f"Contradiction in column {j}: {e}")
+
+                # Check if column state was updated and update solve_result
+                if current_col_state != original_state:
+                    changed = True
+                    # Write back the updated column state to solve_result
+                    for i in range(self.row):
+                        self.solve_result[i][j] = current_col_state[i]
+
+            # Check if puzzle is solved (no uncertain cells remaining)
+            if all(-1 not in row for row in self.solve_result):
+                return True
+
+        # Check why we exited the loop
+        if any(-1 in row for row in self.solve_result):
+            # Puzzle not solved but no more progress can be made
+            return False
+        else:
+            # Puzzle solved
+            return True
