@@ -180,6 +180,28 @@ mod utils {
         result.pop(); // 移除最后一个多余的
         return result;
     }
+
+    pub fn find_certain_grids(possibilities: &Vec<Vec<bool>>) -> Vec<usize> {
+        let len = possibilities[0].len();
+        let mut certain_grids: Vec<usize> = vec![2; len];
+        for j in 0..len {
+            let mut all_filled = true;
+            let mut all_empty = true;
+            for possibility in possibilities {
+                if possibility[j] == true {
+                    all_empty = false;
+                } else {
+                    all_filled = false;
+                }
+            }
+            if all_filled {
+                certain_grids[j] = 1;
+            } else if all_empty {
+                certain_grids[j] = 0;
+            }
+        }
+        return certain_grids;
+    }
 }
 
 #[cfg(test)]
@@ -234,5 +256,16 @@ mod tests {
                 println!("{:?}", possibility);
             }
         }
+    }
+
+    #[test]
+    fn test_find_certain_grids() {
+        let possibilities = vec![
+            vec![true, false, true, false],
+            vec![true, false, true, false],
+            vec![true, true, true, false],
+        ];
+        let certain_grids = utils::find_certain_grids(&possibilities);
+        assert_eq!(certain_grids, vec![1, 2, 1, 0]);
     }
 }
