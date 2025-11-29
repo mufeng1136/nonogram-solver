@@ -234,7 +234,7 @@ impl NonogramSolver {
         }
         self.solved = self.check_solved();
         if self.solved {
-            self.show_answer();
+            println!("The puzzle is solved uniquely!");
         } else {
             println!("The puzzle is unsolvable. (multiple solutions)");
         }

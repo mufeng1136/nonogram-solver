@@ -45,4 +45,5 @@ fn main() {
     solver.set_col_clues(&col_clues);
     solver.show_state();
     solver.solve();
+    solver.show_answer();
 }
