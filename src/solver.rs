@@ -126,7 +126,7 @@ impl NonogramSolver {
             let certain_in_row = utils::find_certain_grids(&self.rows_possibilities[i]);
             for j in 0..self.col {
                 if certain_in_row[j] != 2 {
-                    if self.certain_grids[i][j] != certain_in_row[j] {
+                    if self.certain_grids[i][j] == 2 {
                         updated = true;
                     }
                     self.certain_grids[i][j] = certain_in_row[j];
@@ -136,8 +136,8 @@ impl NonogramSolver {
         for j in 0..self.col {
             let certain_in_row = utils::find_certain_grids(&self.cols_possibilities[j]);
             for i in 0..self.col {
-                if certain_in_row[j] != 2 {
-                    if self.certain_grids[i][j] != certain_in_row[i] {
+                if certain_in_row[i] != 2 {
+                    if self.certain_grids[i][j] == 2 {
                         updated = true;
                     }
                     self.certain_grids[i][j] = certain_in_row[i];
@@ -147,19 +147,167 @@ impl NonogramSolver {
         return updated;
     }
 
+    pub fn check_valid(&self) -> bool {
+        // 检查 row_clues 的数量是否与 row 一致
+        if self.row_clues.len() != self.row {
+            eprintln!("Invalid: Number of row clues does not match the number of rows.");
+            return false;
+        }
+
+        // 检查 row_clues 中的每个 clue 是否全为正整数，且和不超过 col
+        for (i, row_clue) in self.row_clues.iter().enumerate() {
+            if row_clue.iter().any(|&clue| clue == 0) {
+                eprintln!("Invalid: Row {} contains non-positive clues.", i + 1);
+                return false;
+            }
+            if row_clue.iter().sum::<usize>() + row_clue.len() - 1 > self.col {
+                eprintln!("Invalid: Row {} clues exceed the column limit.", i + 1);
+                return false;
+            }
+        }
+
+        // 检查 col_clues 的数量是否与 col 一致
+        if self.col_clues.len() != self.col {
+            eprintln!("Invalid: Number of column clues does not match the number of columns.");
+            return false;
+        }
+
+        // 检查 col_clues 中的每个 clue 是否全为正整数，且和不超过 row
+        for (i, col_clue) in self.col_clues.iter().enumerate() {
+            if col_clue.iter().any(|&clue| clue == 0) {
+                eprintln!("Invalid: Column {} contains non-positive clues.", i + 1);
+                return false;
+            }
+            if col_clue.iter().sum::<usize>() + col_clue.len() - 1 > self.row {
+                eprintln!("Invalid: Column {} clues exceed the row limit.", i + 1);
+                return false;
+            }
+        }
+
+        // 如果所有检查都通过，返回 true
+        true
+    }
+
+    fn check_zero_possibilities(&self) -> bool {
+        for i in 0..self.row {
+            if self.rows_possibilities[i].is_empty() {
+                return true;
+            }
+        }
+        for j in 0..self.col {
+            if self.cols_possibilities[j].is_empty() {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    fn check_solved(&self) -> bool {
+        for i in 0..self.row {
+            for j in 0..self.col {
+                if self.certain_grids[i][j] == 2 {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    pub fn solve(&mut self) {
+        self.valid = self.check_valid();
+        if !self.valid {
+            return;
+        }
+        let mut updated = true;
+        while updated {
+            self.generate_row_possibilities();
+            self.generate_col_possibilities();
+            if self.check_zero_possibilities() {
+                self.unsolvable = true;
+                println!("The puzzle is unsolvable. (no solution)");
+                return;
+            }
+            updated = self.update_certain_grids();
+            if !updated {
+                break;
+            }
+        }
+        self.solved = self.check_solved();
+        if self.solved {
+            self.show_answer();
+        } else {
+            println!("The puzzle is unsolvable. (multiple solutions)");
+        }
+    }
+
     pub fn show_answer(&self) {
         if self.solved && !self.unsolvable {
-            println!("Solution:");
-            for (r, i) in self.rows_possibilities_index.iter().enumerate() {
-                let row: &Vec<bool> = &self.rows_possibilities[r][*i];
-                print!("{:2}: ", r + 1);
-                for &cell in row.iter() {
-                    if cell == true {
-                        print!("██");
+            println!("row: {}, col: {}", self.row, self.col);
+
+            // Determine the maximum width of row clues for alignment
+            let max_row_clue_width = self
+                .row_clues
+                .iter()
+                .map(|clue| clue.len())
+                .max()
+                .unwrap_or(0);
+
+            // Print column clues at the top, aligned above each 3-char grid cell.
+            // Each grid cell occupies `col_clue_width` characters (3).
+            let col_clue_width = 3; // width per column cell
+            // left padding to account for the printed row clues area (plus one separating space)
+            let left_padding = max_row_clue_width * col_clue_width;
+            // find the maximum column-clue height so we can print from top to bottom
+            let max_col_clue_height = self.col_clues.iter().map(|c| c.len()).max().unwrap_or(0);
+
+            for clue_row in 0..max_col_clue_height {
+                // print left padding for the row clues column
+                print!("{:width$}", "", width = left_padding);
+
+                // For each column, compute its start row (so clues are bottom-aligned)
+                for col_clue in &self.col_clues {
+                    let start_row = max_col_clue_height.saturating_sub(col_clue.len());
+                    if clue_row < start_row {
+                        // this column has no clue at this top row -> print empty cell width
+                        print!("{:>width$}", "", width = col_clue_width);
                     } else {
-                        print!("  ");
+                        // print the clue number corresponding to this row
+                        let idx = clue_row - start_row;
+                        print!("{:>width$}", col_clue[idx], width = col_clue_width);
                     }
                 }
+                println!();
+            }
+
+            // Adjust row clue spacing to 3 spaces for alignment
+            for (r, row) in self.certain_grids.iter().enumerate() {
+                if let Some(clue) = self.row_clues.get(r) {
+                    let clue_str: String = clue
+                        .iter()
+                        .map(|c| c.to_string())
+                        .collect::<Vec<_>>()
+                        .join(" ");
+                    print!("{:>width$} ", clue_str, width = max_row_clue_width * 3);
+                }
+
+                // Print the grid row
+                // Adjust grid cell width to 3 spaces
+                for (c_idx, &cell) in row.iter().enumerate() {
+                    if cell == 1 {
+                        // filled cell: alternate blue/magenta background
+                        if (r + c_idx) % 2 == 0 {
+                            print!("\x1b[44m   \x1b[0m");
+                        } else {
+                            print!("\x1b[45m   \x1b[0m");
+                        }
+                    } else if cell == 0 {
+                        // empty cell: plain spaces
+                        print!("   ");
+                    } else {
+                        print!("...");
+                    }
+                }
+                println!();
             }
         } else if !self.unsolvable {
             println!("The puzzle is not yet solved.");
@@ -312,5 +460,100 @@ mod tests {
         ];
         let updated = solver.update_certain_grids();
         dbg!(&solver.certain_grids);
+    }
+
+    #[test]
+    fn test_solver_15() {
+        let row_clues: Vec<Vec<usize>> = vec![
+            vec![6, 1, 2],
+            vec![5, 1, 3],
+            vec![8, 5],
+            vec![1, 3, 1, 5],
+            vec![9],
+            //
+            vec![1, 1, 6],
+            vec![1, 1, 2, 1],
+            vec![1, 3, 1, 1],
+            vec![2, 1],
+            vec![6, 2],
+            //
+            vec![2, 7],
+            vec![2, 5],
+            vec![6, 1],
+            vec![3, 1, 1],
+            vec![3, 1, 1],
+        ];
+
+        let col_clues: Vec<Vec<usize>> = vec![
+            vec![4, 3],
+            vec![3, 3],
+            vec![4, 1],
+            vec![4, 3, 1],
+            vec![5, 1, 2],
+            //
+            vec![1, 1, 4, 3],
+            vec![1, 1, 1, 1, 2],
+            vec![4, 1, 1, 1],
+            vec![1, 3],
+            vec![6, 3],
+            //
+            vec![6, 3],
+            vec![5, 6],
+            vec![5, 2],
+            vec![4, 1, 2, 2],
+            vec![2, 6],
+        ];
+        let mut solver = NonogramSolver::new(15, 15);
+        solver.set_row_clues(&row_clues);
+        solver.set_col_clues(&col_clues);
+        solver.solve();
+
+        for i in 0..15 {
+            println!("row {}", i);
+            println!("{:?}", solver.certain_grids[i]);
+        }
+        dbg!(&solver.valid);
+        dbg!(&solver.unsolvable);
+        dbg!(&solver.solved);
+    }
+
+    #[test]
+    fn test_solver_3() {
+        let row_clues: Vec<Vec<usize>> = vec![vec![3], vec![3], vec![3]];
+
+        let col_clues: Vec<Vec<usize>> = vec![vec![3], vec![3], vec![3]];
+        let mut solver = NonogramSolver::new(3, 3);
+        solver.set_row_clues(&row_clues);
+        solver.set_col_clues(&col_clues);
+        solver.solve();
+
+        for i in 0..3 {
+            println!("row {}", i);
+            println!("{:?}", solver.certain_grids[i]);
+        }
+        dbg!(&solver.valid);
+        dbg!(&solver.unsolvable);
+        dbg!(&solver.solved);
+    }
+
+    #[test]
+    fn test_solver_3_detailed() {
+        let row_clues: Vec<Vec<usize>> = vec![vec![3], vec![3], vec![3]];
+
+        let col_clues: Vec<Vec<usize>> = vec![vec![3], vec![3], vec![3]];
+        let mut solver = NonogramSolver::new(3, 3);
+        solver.set_row_clues(&row_clues);
+        solver.set_col_clues(&col_clues);
+        solver.generate_col_possibilities();
+        dbg!(&solver.cols_possibilities);
+        solver.generate_row_possibilities();
+        dbg!(&solver.rows_possibilities);
+        let updated = solver.update_certain_grids();
+        dbg!(&updated);
+        dbg!(&solver.certain_grids);
+        solver.generate_col_possibilities();
+        solver.generate_row_possibilities();
+        let updated = solver.update_certain_grids();
+        dbg!(&updated);
     }
 }
