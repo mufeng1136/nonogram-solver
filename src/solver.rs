@@ -120,6 +120,33 @@ impl NonogramSolver {
         }
     }
 
+    fn update_certain_grids(&mut self) -> bool {
+        let mut updated = false;
+        for i in 0..self.row {
+            let certain_in_row = utils::find_certain_grids(&self.rows_possibilities[i]);
+            for j in 0..self.col {
+                if certain_in_row[j] != 2 {
+                    if self.certain_grids[i][j] != certain_in_row[j] {
+                        updated = true;
+                    }
+                    self.certain_grids[i][j] = certain_in_row[j];
+                }
+            }
+        }
+        for j in 0..self.col {
+            let certain_in_row = utils::find_certain_grids(&self.cols_possibilities[j]);
+            for i in 0..self.col {
+                if certain_in_row[j] != 2 {
+                    if self.certain_grids[i][j] != certain_in_row[i] {
+                        updated = true;
+                    }
+                    self.certain_grids[i][j] = certain_in_row[i];
+                }
+            }
+        }
+        return updated;
+    }
+
     pub fn show_answer(&self) {
         if self.solved && !self.unsolvable {
             println!("Solution:");
@@ -267,5 +294,23 @@ mod tests {
         ];
         let certain_grids = utils::find_certain_grids(&possibilities);
         assert_eq!(certain_grids, vec![1, 2, 1, 0]);
+    }
+
+    #[test]
+    fn test_update_certain_grids() {
+        let mut solver = NonogramSolver::new(3, 3);
+        dbg!(&solver.certain_grids);
+        solver.rows_possibilities = vec![
+            vec![vec![true, false, true], vec![true, false, true]],
+            vec![vec![false, true, false], vec![false, true, false]],
+            vec![vec![true, true, true], vec![true, true, true]],
+        ];
+        solver.cols_possibilities = vec![
+            vec![vec![true, false, true], vec![true, false, true]],
+            vec![vec![false, true, true], vec![false, true, true]],
+            vec![vec![true, false, true], vec![true, false, true]],
+        ];
+        let updated = solver.update_certain_grids();
+        dbg!(&solver.certain_grids);
     }
 }
