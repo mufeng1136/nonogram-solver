@@ -1,10 +1,13 @@
+use crate::solver::utils::integer_partitions;
+
 pub struct NonogramSolver {
     row: usize,
     col: usize,
-    row_clues: Option<Vec<Vec<usize>>>,
-    col_clues: Option<Vec<Vec<usize>>>,
-    rows_possibilities: Vec<Vec<Vec<usize>>>,
-    cols_possibilities: Vec<Vec<Vec<usize>>>,
+    row_clues: Vec<Vec<usize>>,
+    col_clues: Vec<Vec<usize>>,
+    rows_possibilities: Vec<Vec<Vec<bool>>>,
+    cols_possibilities: Vec<Vec<Vec<bool>>>,
+    // 0 means empty, 1 means filled, 2 means unknown
     certain_grids_from_input: Vec<Vec<usize>>,
     certain_grids: Vec<Vec<usize>>,
     unsolvable: bool,
@@ -19,8 +22,8 @@ impl NonogramSolver {
         NonogramSolver {
             row,
             col,
-            row_clues: None,
-            col_clues: None,
+            row_clues: Vec::new(),
+            col_clues: Vec::new(),
             rows_possibilities: Vec::new(),
             cols_possibilities: Vec::new(),
             unsolvable: false,
@@ -38,7 +41,7 @@ impl NonogramSolver {
             eprintln!("Warning: Number of row clues does not match the number of rows");
             return;
         }
-        self.row_clues = Some(clues.clone());
+        self.row_clues = clues.clone();
         self.valid = false;
         self.unsolvable = false;
         self.solved = false;
@@ -49,7 +52,7 @@ impl NonogramSolver {
             eprintln!("Warning: Number of column clues does not match the number of columns");
             return;
         }
-        self.col_clues = Some(clues.clone());
+        self.col_clues = clues.clone();
         self.valid = false;
         self.unsolvable = false;
         self.solved = false;
@@ -57,35 +60,74 @@ impl NonogramSolver {
 
     pub fn show_state(&self) {
         println!("row: {}, col: {}", self.row, self.col);
-        match self.col_clues {
-            None => println!("Column clues: None"),
-            Some(ref clues) => {
-                println!("Column clues:");
-                for (i, clue) in clues.iter().enumerate() {
-                    println!("  Column {}: {:?}", i + 1, clue);
-                }
-            }
+
+        println!("Row clues:");
+        for (i, clue) in self.row_clues.iter().enumerate() {
+            println!("  Row {}: {:?}", i + 1, clue);
         }
-        match self.row_clues {
-            None => println!("Column clues: None"),
-            Some(ref clues) => {
-                println!("Column clues:");
-                for (i, clue) in clues.iter().enumerate() {
-                    println!("  Column {}: {:?}", i + 1, clue);
-                }
-            }
+
+        println!("Column clues:");
+        for (i, clue) in self.col_clues.iter().enumerate() {
+            println!("  Column {}: {:?}", i + 1, clue);
         }
+
         println!("Valid: {}, Solved: {}", self.valid, self.solved);
+    }
+
+    fn generate_row_possibilities(&mut self) {
+        self.rows_possibilities = vec![Vec::new(); self.row];
+        for (i, row_clue) in self.row_clues.iter().enumerate() {
+            let partitions: Vec<Vec<usize>> = utils::integer_partitions(
+                self.col + 2 - row_clue.iter().sum::<usize>(),
+                row_clue.len() + 1,
+            );
+            'different_partition: for partition in &partitions {
+                let possibility: Vec<bool> =
+                    utils::generate_possibility_from_partition(partition, row_clue);
+                for j in 0..self.col {
+                    if self.certain_grids[i][j] == 1 && possibility[j] == false {
+                        continue 'different_partition;
+                    }
+                    if self.certain_grids[i][j] == 0 && possibility[j] == true {
+                        continue 'different_partition;
+                    }
+                }
+                self.rows_possibilities[i].push(possibility);
+            }
+        }
+    }
+
+    fn generate_col_possibilities(&mut self) {
+        self.cols_possibilities = vec![Vec::new(); self.col];
+        for (i, col_clue) in self.col_clues.iter().enumerate() {
+            let partitions: Vec<Vec<usize>> = utils::integer_partitions(
+                self.row + 2 - col_clue.iter().sum::<usize>(),
+                col_clue.len() + 1,
+            );
+            'different_partition: for partition in &partitions {
+                let possibility: Vec<bool> =
+                    utils::generate_possibility_from_partition(partition, col_clue);
+                for j in 0..self.row {
+                    if self.certain_grids[j][i] == 1 && possibility[j] == false {
+                        continue 'different_partition;
+                    }
+                    if self.certain_grids[j][i] == 0 && possibility[j] == true {
+                        continue 'different_partition;
+                    }
+                }
+                self.cols_possibilities[i].push(possibility);
+            }
+        }
     }
 
     pub fn show_answer(&self) {
         if self.solved && !self.unsolvable {
             println!("Solution:");
             for (r, i) in self.rows_possibilities_index.iter().enumerate() {
-                let row: &Vec<usize> = &self.rows_possibilities[r][*i];
+                let row: &Vec<bool> = &self.rows_possibilities[r][*i];
                 print!("{:2}: ", r + 1);
                 for &cell in row.iter() {
-                    if cell == 1 {
+                    if cell == true {
                         print!("██");
                     } else {
                         print!("  ");
@@ -101,6 +143,7 @@ impl NonogramSolver {
 }
 
 mod utils {
+
     pub fn integer_partitions(n: usize, k: usize) -> Vec<Vec<usize>> {
         let mut result: Vec<Vec<usize>> = Vec::new();
         let mut current: Vec<usize> = Vec::new();
@@ -123,6 +166,20 @@ mod utils {
         helper(n, k, &mut current, &mut result);
         return result;
     }
+
+    pub fn generate_possibility_from_partition(
+        partition: &Vec<usize>,
+        clue: &Vec<usize>,
+    ) -> Vec<bool> {
+        let mut result: Vec<bool> = Vec::new();
+        result.extend(vec![false; partition[0] - 1]);
+        for (i, &block_len) in clue.iter().enumerate() {
+            result.extend(vec![true; block_len]);
+            result.extend(vec![false; partition[i + 1]]);
+        }
+        result.pop(); // 移除最后一个多余的
+        return result;
+    }
 }
 
 #[cfg(test)]
@@ -143,5 +200,39 @@ mod tests {
             partitions,
             vec![vec![1, 4], vec![2, 3], vec![3, 2], vec![4, 1]]
         );
+    }
+
+    #[test]
+    fn test_generate_possibility_from_partition() {
+        let partition = vec![1, 2, 1];
+        let clue = vec![2, 3];
+        let possibility = utils::generate_possibility_from_partition(&partition, &clue);
+        assert_eq!(
+            possibility,
+            vec![true, true, false, false, true, true, true]
+        );
+    }
+
+    #[test]
+    fn test_generate_row_possibilities() {
+        let mut solver = NonogramSolver::new(5, 5);
+        solver.row_clues = vec![vec![2], vec![1, 1], vec![3], vec![1], vec![2]];
+        solver.col_clues = vec![vec![1], vec![2], vec![1, 1], vec![2], vec![1]];
+        solver.certain_grids[0][0] = 1;
+        solver.generate_row_possibilities();
+        solver.generate_col_possibilities();
+
+        for i in 0..5 {
+            println!("Row {} possibilities:", i + 1);
+            for possibility in &solver.rows_possibilities[i] {
+                println!("{:?}", possibility);
+            }
+        }
+        for i in 0..5 {
+            println!("Col {} possibilities:", i + 1);
+            for possibility in &solver.cols_possibilities[i] {
+                println!("{:?}", possibility);
+            }
+        }
     }
 }
