@@ -139,11 +139,15 @@ function cellBorder(v: number): string {
   return '#d1d5db';
 }
 
+function splitClueTokens(text: string): string[] {
+  const normalized = text.replace(/，/g, ',').trim();
+  if (!normalized) return [];
+  return normalized.split(/[\s,]+/).filter(Boolean);
+}
+
 function parseClueLine(text: string): number[] {
-  const normalized = text.replace(/，/g, ',');
-  const trimmed = normalized.trim();
-  if (!trimmed) return [];
-  const parts = trimmed.split(/[\s,]+/).filter(Boolean);
+  const parts = splitClueTokens(text);
+  if (parts.length === 0) return [];
   const nums = parts.map((p) => Number(p));
   if (nums.some((n) => !Number.isFinite(n) || !Number.isInteger(n) || n <= 0)) {
     throw new Error(t('clueFormatError')(text));
@@ -168,7 +172,7 @@ function clueDisplayVertical(text: string): string {
       .map((n) => String(n))
       .join('\n');
   } catch {
-    return t.split(/[\s,]+/).filter(Boolean).join('\n');
+    return splitClueTokens(t).join('\n');
   }
 }
 
@@ -240,7 +244,7 @@ function renderEditor() {
     for (let c = 0; c < state.cols; c++) {
       const t = (state.colClueText[c] ?? '').trim();
       if (!t) continue;
-      const parts = t.split(/[\s,]+/).filter(Boolean);
+      const parts = splitClueTokens(t);
       max = Math.max(max, parts.length);
     }
     return max;
