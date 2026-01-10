@@ -56,6 +56,32 @@ impl NonogramSolver {
         self.solved = false;
     }
 
+    pub fn set_known_grid(&mut self, grid: &Vec<Vec<u8>>) -> Result<(), String> {
+        if grid.len() != self.row {
+            return Err("Known grid row count does not match".to_string());
+        }
+        for (r, row) in grid.iter().enumerate() {
+            if row.len() != self.col {
+                return Err(format!("Known grid col count does not match at row {}", r));
+            }
+            for (c, &v) in row.iter().enumerate() {
+                if v > 2 {
+                    return Err(format!("Invalid cell value at ({}, {}): {}", r, c, v));
+                }
+            }
+        }
+
+        self.certain_grids_from_input = grid
+            .iter()
+            .map(|r| r.iter().map(|&v| v as usize).collect())
+            .collect();
+        self.certain_grids = self.certain_grids_from_input.clone();
+        self.valid = false;
+        self.unsolvable = false;
+        self.solved = false;
+        Ok(())
+    }
+
     pub fn show_state(&self) {
         println!("row: {}, col: {}", self.row, self.col);
 
@@ -158,7 +184,13 @@ impl NonogramSolver {
                 eprintln!("Invalid: Row {} contains non-positive clues.", i + 1);
                 return false;
             }
-            if row_clue.iter().sum::<usize>() + row_clue.len() - 1 > self.col {
+            let required = row_clue.iter().sum::<usize>()
+                + if row_clue.is_empty() {
+                    0
+                } else {
+                    row_clue.len() - 1
+                };
+            if required > self.col {
                 eprintln!("Invalid: Row {} clues exceed the column limit.", i + 1);
                 return false;
             }
@@ -176,7 +208,13 @@ impl NonogramSolver {
                 eprintln!("Invalid: Column {} contains non-positive clues.", i + 1);
                 return false;
             }
-            if col_clue.iter().sum::<usize>() + col_clue.len() - 1 > self.row {
+            let required = col_clue.iter().sum::<usize>()
+                + if col_clue.is_empty() {
+                    0
+                } else {
+                    col_clue.len() - 1
+                };
+            if required > self.row {
                 eprintln!("Invalid: Column {} clues exceed the row limit.", i + 1);
                 return false;
             }
