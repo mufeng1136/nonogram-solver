@@ -17,7 +17,7 @@ Nonogram (Picross) solver implemented in Rust, with a desktop GUI built on **Tau
 
 ### GUI preview
 
-![GUI screenshot (English)](assets/gui-en.png)
+<img src="assets/gui-en.png" alt="GUI screenshot (English)" width="600" />
 
 ---
 
@@ -99,7 +99,7 @@ MIT License (see [LICENSE](LICENSE)).
 
 ### GUI 界面预览
 
-![GUI 界面截图（中文）](assets/gui-zh.png)
+<img src="assets/gui-zh.png" alt="GUI 界面截图（中文）" width="600" />
 
 ---
 
