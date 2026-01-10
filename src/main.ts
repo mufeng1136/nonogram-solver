@@ -39,7 +39,6 @@ const i18n = {
     solved: '已求解。',
     clueInvalid: '线索不合法',
     unsolvable: '无解',
-    notSolved: '未解',
     tauriUnavailable:
       '无法调用 Tauri API：你可能是在普通浏览器中打开了前端页面。' +
       '请使用 `cargo tauri dev` 启动（开发模式），或运行打包后的可执行文件（`src-tauri/target/release` 或 bundle 输出）。',
@@ -76,7 +75,6 @@ const i18n = {
     solved: 'Solved.',
     clueInvalid: 'Invalid clues',
     unsolvable: 'Unsolvable',
-    notSolved: 'Not solved',
     tauriUnavailable:
       'Tauri API not available. You are likely opening the frontend in a normal browser. ' +
       'Please launch it via `cargo tauri dev` (dev) or run the built executable from `src-tauri/target/release` / the bundle output.',
@@ -555,7 +553,7 @@ function mountUI() {
         statusEl.textContent = t('solved');
       } else {
         state.solvedGrid = null;
-        setPuzzleStatus(t('notSolved'));
+        setPuzzleStatus(t('unsolvable'));
         statusEl.textContent = t('done');
       }
 
