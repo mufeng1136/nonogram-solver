@@ -1,4 +1,4 @@
-pub mod solver;
+use nonogram_solver_core::solver::NonogramSolver;
 
 fn main() {
     let row_clues: Vec<Vec<usize>> = vec![
@@ -40,7 +40,8 @@ fn main() {
         vec![4, 1, 2, 2],
         vec![2, 6],
     ];
-    let mut solver = solver::NonogramSolver::new(15, 15);
+
+    let mut solver = NonogramSolver::new(15, 15);
     solver.set_row_clues(&row_clues);
     solver.set_col_clues(&col_clues);
     solver.show_state();

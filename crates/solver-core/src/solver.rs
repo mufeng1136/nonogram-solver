@@ -1,5 +1,3 @@
-use crate::solver::utils::integer_partitions;
-
 pub struct NonogramSolver {
     row: usize,
     col: usize,
@@ -134,17 +132,17 @@ impl NonogramSolver {
             }
         }
         for j in 0..self.col {
-            let certain_in_row = utils::find_certain_grids(&self.cols_possibilities[j]);
-            for i in 0..self.col {
-                if certain_in_row[i] != 2 {
+            let certain_in_col = utils::find_certain_grids(&self.cols_possibilities[j]);
+            for i in 0..self.row {
+                if certain_in_col[i] != 2 {
                     if self.certain_grids[i][j] == 2 {
                         updated = true;
                     }
-                    self.certain_grids[i][j] = certain_in_row[i];
+                    self.certain_grids[i][j] = certain_in_col[i];
                 }
             }
         }
-        return updated;
+        updated
     }
 
     pub fn check_valid(&self) -> bool {
@@ -199,7 +197,7 @@ impl NonogramSolver {
                 return true;
             }
         }
-        return false;
+        false
     }
 
     fn check_solved(&self) -> bool {
@@ -210,7 +208,7 @@ impl NonogramSolver {
                 }
             }
         }
-        return true;
+        true
     }
 
     pub fn solve(&mut self) {
@@ -315,6 +313,22 @@ impl NonogramSolver {
             println!("The puzzle is unsolvable.");
         }
     }
+
+    pub fn grid(&self) -> &Vec<Vec<usize>> {
+        &self.certain_grids
+    }
+
+    pub fn is_valid(&self) -> bool {
+        self.valid
+    }
+
+    pub fn is_solved(&self) -> bool {
+        self.solved
+    }
+
+    pub fn is_unsolvable(&self) -> bool {
+        self.unsolvable
+    }
 }
 
 mod utils {
@@ -339,7 +353,7 @@ mod utils {
             }
         }
         helper(n, k, &mut current, &mut result);
-        return result;
+        result
     }
 
     pub fn generate_possibility_from_partition(
@@ -353,7 +367,7 @@ mod utils {
             result.extend(vec![false; partition[i + 1]]);
         }
         result.pop(); // 移除最后一个多余的
-        return result;
+        result
     }
 
     pub fn find_certain_grids(possibilities: &Vec<Vec<bool>>) -> Vec<usize> {
@@ -375,7 +389,7 @@ mod utils {
                 certain_grids[j] = 0;
             }
         }
-        return certain_grids;
+        certain_grids
     }
 }
 
@@ -458,7 +472,7 @@ mod tests {
             vec![vec![false, true, true], vec![false, true, true]],
             vec![vec![true, false, true], vec![true, false, true]],
         ];
-        let updated = solver.update_certain_grids();
+        let _updated = solver.update_certain_grids();
         dbg!(&solver.certain_grids);
     }
 

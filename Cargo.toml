@@ -1,6 +1,10 @@
-[package]
-name = "nonogram_solver"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = [
+	"crates/solver-core",
+	"crates/cli",
+	"src-tauri",
+]
 
-[dependencies]
+default-members = ["crates/cli"]
+resolver = "2"
+
