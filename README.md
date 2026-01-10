@@ -15,6 +15,10 @@ Nonogram (Picross) solver implemented in Rust, with a desktop GUI built on **Tau
 - Solve Nonogram puzzles (powered by the `solver-core` algorithm)
 - Tauri desktop GUI (interactive use)
 
+### GUI preview
+
+![GUI screenshot (English)](assets/gui-en.png)
+
 ---
 
 ## Repository layout
@@ -92,6 +96,10 @@ MIT License (see [LICENSE](LICENSE)).
 
 - Nonogram 题目求解（基于 `solver-core` 的核心算法）
 - Tauri 桌面 GUI（适合交互式使用）
+
+### GUI 界面预览
+
+![GUI 界面截图（中文）](assets/gui-zh.png)
 
 ---
 
