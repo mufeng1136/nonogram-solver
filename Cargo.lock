@@ -77,7 +77,7 @@ checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 
 [[package]]
 name = "app"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "log",
  "nonogram-solver-core",
@@ -1910,14 +1910,14 @@ checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
 
 [[package]]
 name = "nonogram-solver-cli"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "nonogram-solver-core",
 ]
 
 [[package]]
 name = "nonogram-solver-core"
-version = "0.1.0"
+version = "1.0.0"
 
 [[package]]
 name = "num-conv"
