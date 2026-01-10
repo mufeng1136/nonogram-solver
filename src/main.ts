@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { open as shellOpen } from '@tauri-apps/plugin-shell';
 
 type Lang = 'zh' | 'en';
 
@@ -45,6 +46,8 @@ const i18n = {
     missingApp: '缺少 #app 元素',
     clueFormatError: (text: string) => `线索格式错误："${text}"（请使用空格或逗号分隔的正整数）`,
     langToggle: 'English',
+    githubLinkLabel: 'GitHub 仓库',
+    issuesLinkLabel: '问题反馈',
   },
   en: {
     appTitle: 'Nonogram Solver',
@@ -80,6 +83,8 @@ const i18n = {
     missingApp: 'Missing #app',
     clueFormatError: (text: string) => `Invalid clue line: "${text}" (use positive integers separated by space/comma)`,
     langToggle: '中文',
+    githubLinkLabel: 'GitHub Repo',
+    issuesLinkLabel: 'Issues',
   },
 } as const;
 
@@ -112,6 +117,14 @@ type SolveRequest = {
 function isTauriRuntime(): boolean {
   const w = window as any;
   return typeof w?.__TAURI_INTERNALS__?.invoke === 'function' || typeof w?.__TAURI__?.core?.invoke === 'function';
+}
+
+async function openExternal(url: string): Promise<void> {
+  if (isTauriRuntime()) {
+    await shellOpen(url);
+    return;
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 async function tauriInvoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
@@ -432,7 +445,35 @@ function mountUI() {
         <div style="margin-top:6px; font-size:12px; color:#6b7280;">${t('navHint')}</div>
       </div>
     </div>
+    <div style="max-width: 1100px; margin: 0 auto; padding: 0 16px 16px;">
+      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; text-align: center;">
+        <a id="footerRepoLink" href="https://github.com/worldedge1933/nonogram-solver" target="_blank" rel="noopener noreferrer" style="color:#374151; text-decoration: none;">${t('githubLinkLabel')}</a>
+        <span style="margin: 0 6px; color:#9ca3af;">•</span>
+        <a id="footerIssuesLink" href="https://github.com/worldedge1933/nonogram-solver/issues" target="_blank" rel="noopener noreferrer" style="color:#374151; text-decoration: none;">${t('issuesLinkLabel')}</a>
+      </div>
+    </div>
   `;
+
+  const repoLink = document.getElementById('footerRepoLink') as HTMLAnchorElement | null;
+  const issuesLink = document.getElementById('footerIssuesLink') as HTMLAnchorElement | null;
+
+  const wireExternalLink = (a: HTMLAnchorElement | null) => {
+    if (!a) return;
+    a.addEventListener('click', async (e) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const url = a.href;
+      if (!url) return;
+      e.preventDefault();
+      try {
+        await openExternal(url);
+      } catch {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    });
+  };
+
+  wireExternalLink(repoLink);
+  wireExternalLink(issuesLink);
 
   langToggleBtn = document.getElementById('langToggle') as HTMLButtonElement;
   rowsInput = document.getElementById('rows') as HTMLInputElement;
