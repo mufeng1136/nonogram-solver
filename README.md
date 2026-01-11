@@ -33,8 +33,8 @@ Nonogram (Picross) solver implemented in Rust, with a desktop GUI built on **Tau
 
 ## Requirements
 
-- Rust (latest stable recommended)
-- Node.js (for building the frontend)
+- Rust
+- Node.js
 
 ---
 
@@ -79,7 +79,7 @@ MIT License (see [LICENSE](LICENSE)).
 
 ## 中文说明
 
-一个用于求解**数织 / Nonogram（Picross）**的项目，核心求解逻辑使用 Rust 实现，并提供基于 **Tauri + Vite** 的桌面 GUI。
+一个用于求解 **数织 / Nonogram（Picross** 的项目，核心求解逻辑使用 Rust 实现，并提供基于 **Tauri + Vite** 的桌面 GUI。
 
 > 目标：把求解算法做成可复用的 Rust crate，并提供便捷的桌面端交互体验。
 
@@ -108,8 +108,8 @@ MIT License (see [LICENSE](LICENSE)).
 
 ## 环境要求
 
-- Rust（建议使用最新 stable）
-- Node.js（用于构建前端）
+- Rust
+- Node.js
 
 ---
 
