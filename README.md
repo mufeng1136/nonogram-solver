@@ -71,13 +71,6 @@ cargo tauri build
 
 ---
 
-## Development notes
-
-- Make solver changes in `crates/solver-core/` first to keep the logic reusable.
-- The GUI should focus on UX/visualization and call into `solver-core` for solving.
-
----
-
 ## License
 
 MIT License (see [LICENSE](LICENSE)).
@@ -150,13 +143,6 @@ cargo tauri build --no-bundle
 ```bash
 cargo tauri build
 ```
-
----
-
-## 开发说明
-
-- 核心算法建议优先改动 `crates/solver-core/`，保证可复用。
-- GUI 负责交互与可视化，求解逻辑尽量走 `solver-core` 的 API。
 
 ---
 
