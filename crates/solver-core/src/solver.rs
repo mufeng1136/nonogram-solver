@@ -11,11 +11,7 @@ pub struct NonogramSolver {
     unsolvable: bool,
     solved: bool,
     valid: bool,
-    // #[allow(dead_code)] does not comply with Rust's standards, but just suppress the warning for now.
-    //（这样不符合Rust规范，但只管先抑制警告）
-    #[allow(dead_code)] 
     cols_current: Vec<Vec<usize>>,
-    #[allow(dead_code)] 
     rows_possibilities_index: Vec<usize>,
 }
 
